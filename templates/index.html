@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Aukcja</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Serwis aukcyjny</h1>
+    <div>
+        {% for user in users %}
+            <button onclick="window.location.href='/login/{{ user }}'">{{ user }}</button>
+            {% if user in logged_in_users %}
+                <span>Zalogowany</span>
+            {% endif %}
+        {% endfor %}
+    </div>
+</body>
+</html>

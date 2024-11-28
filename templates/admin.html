@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Administratora</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const socket = io();
+
+            document.getElementById('start-auction').addEventListener('click', function() {
+                socket.emit('start_auction');
+            });
+
+            document.getElementById('end-round').addEventListener('click', function() {
+                socket.emit('end_round');
+            });
+
+            socket.on('round_data', function(data) {
+                const roundDataElement = document.getElementById('round-data');
+                roundDataElement.innerHTML = '';
+                data.forEach(block => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `Blok ${block.block}: ${block.current_bid} zł (Prowadzi: ${block.highest_bidder || 'brak'})`;
+                    roundDataElement.appendChild(listItem);
+                });
+            });
+
+            socket.on('new_bid', function(data) {
+                const bidsElement = document.getElementById('bids');
+                const listItem = document.createElement('li');
+                listItem.textContent = `Runda ${data.round}, ${data.time} - Użytkownik ${data.user} złożył ofertę na blok ${data.block}: ${data.bid_amount} zł`;
+                bidsElement.appendChild(listItem);
+            });
+
+            socket.emit('join', { user: 'admin' });
+        });
+    </script>
+</head>
+<body>
+    <h1>Panel Administratora</h1>
+    <div>
+        <h2>Zalogowani użytkownicy:</h2>
+        <ul>
+            {% for user in logged_in_users %}
+                <li>{{ user }}</li>
+            {% endfor %}
+        </ul>
+        <button id="start-auction">Uruchom aukcję</button>
+        <button id="end-round">Zakończ rundę</button>
+        <h2>Wyniki Rundy</h2>
+        <ul id="round-data"></ul>
+        <h2>Złożone Oferty</h2>
+        <ul id="bids"></ul>
+    </div>
+</body>
+</html>

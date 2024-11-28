@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Telekom1 panel</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const socket = io();
+            const roundNumberElement = document.getElementById('round-number');
+            const timeLeftElement = document.getElementById('time-left');
+            const blockListElement = document.getElementById('block-list');
+            const bidForm1 = document.getElementById('bid-form-1');
+            const bidForm2 = document.getElementById('bid-form-2');
+            const submittedBidsList = document.getElementById('submitted-bids-list');
+            const endRoundButton = document.getElementById('end-round');
+
+            let roundNumber = 0;
+            let timeLeft = 60;
+            let timer;
+
+            socket.on('round_data', function(data) {
+                roundNumber = data[0].round;
+                roundNumberElement.textContent = roundNumber;
+                blockListElement.innerHTML = '';
+                data.forEach(block => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `Blok ${block.block}: ${block.current_bid} zł`;
+                    if (block.highest_bidder === '{{ user }}') {
+                        listItem.textContent += ' (Jesteś zwycięzcą)';
+                    }
+                    blockListElement.appendChild(listItem);
+                });
+                startTimer();
+            });
+
+            function startTimer() {
+                clearInterval(timer);
+                timeLeft = 60;
+                timer = setInterval(() => {
+                    timeLeft -= 1;
+                    timeLeftElement.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        socket.emit('end_round');
+                    }
+                }, 1000);
+            }
+
+            bidForm1.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const block1 = document.getElementById('block-1').value;
+                const bidAmount1 = document.getElementById('bid-amount-1').value;
+
+                socket.emit('submit_bid', { block: block1, bid_amount: bidAmount1 });
+                const listItem = document.createElement('li');
+                listItem.textContent = `Blok ${block1}: ${bidAmount1} zł`;
+                submittedBidsList.appendChild(listItem);
+            });
+
+            bidForm2.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const block2 = document.getElementById('block-2').value;
+                const bidAmount2 = document.getElementById('bid-amount-2').value;
+
+                socket.emit('submit_bid', { block: block2, bid_amount: bidAmount2 });
+                const listItem = document.createElement('li');
+                listItem.textContent = `Blok ${block2}: ${bidAmount2} zł`;
+                submittedBidsList.appendChild(listItem);
+            });
+
+            endRoundButton.addEventListener('click', function() {
+                socket.emit('end_round');
+            });
+
+            socket.emit('join', { user: '{{ user }}' });
+        });
+    </script>
+</head>
+<body>
+    <div class="user-panel">
+        <h1 id="username">{{ user }}</h1>
+        <div class="timer">
+            <span id="round-info">Runda: <span id="round-number">0</span></span>
+            <span id="countdown">Czas do końca rundy: <span id="time-left">60</span>s</span>
+        </div>
+        <div class="blocks">
+            <h2>Aktualne Ceny Bloków</h2>
+            <ul id="block-list"></ul>
+        </div>
+        <div class="bids">
+            <h2>Twoje Oferty</h2>
+            
+            <!-- Bid Form 1 -->
+            <form id="bid-form-1" class="{{ 'disabled' if not user_has_bidding_rights else '' }}">
+                <label for="block-1">Blok:</label>
+                <select id="block-1" name="block" {{ 'disabled' if not user_has_bidding_rights else '' }}>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="G">G</option>
+                </select>
+                <label for="bid-amount-1">Kwota Oferty:</label>
+                <input type="number" id="bid-amount-1" name="bid_amount" min="100" step="20" {{ 'disabled' if not user_has_bidding_rights else '' }}>
+                <button type="submit" {{ 'disabled' if not user_has_bidding_rights else '' }}>Złóż Ofertę 1</button>
+            </form>
+
+            <!-- Bid Form 2 -->
+            <form id="bid-form-2" class="{{ 'disabled' if not user_has_bidding_rights else '' }}">
+                <label for="block-2">Blok:</label>
+                <select id="block-2" name="block" {{ 'disabled' if not user_has_bidding_rights else '' }}>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="G">G</option>
+                </select>
+                <label for="bid-amount-2">Kwota Oferty:</label>
+                <input type="number" id="bid-amount-2" name="bid_amount" min="100" step="20" {{ 'disabled' if not user_has_bidding_rights else '' }}>
+                <button type="submit" {{ 'disabled' if not user_has_bidding_rights else '' }}>Złóż Ofertę 2</button>
+            </form>
+
+        </div>
+        <div class="submitted-bids">
+            <h2>Złożone Oferty</h2>
+            <ul id="submitted-bids-list"></ul>
+        </div>
+        <button id="end-round">Zakończ Rundę</button>
+    </div>
+
+    <!-- CSS to style the disabled forms -->
+    <style>
+        .disabled {
+            opacity: 0.5;
+        }
+    </style>
+
+</body>
+</html>

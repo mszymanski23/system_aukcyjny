@@ -1,0 +1,17 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.user-panel {
+    width: 300px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.timer, .blocks, .bids, .submitted-bids {
+    margin: 20px 0;
+}
+
+button {
+    margin-top: 10px;
+}
